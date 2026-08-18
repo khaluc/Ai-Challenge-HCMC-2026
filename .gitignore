@@ -1,0 +1,16 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Real API key export sitting in the project root — never commit this.
+Default Workspace-apiKey-*.csv
+
+# Large generated/downloaded artifacts (data ~107GB, cache ~6.4GB, indexes
+# ~1.6GB, models ~1.2GB) — far too large for git, and all reproducible from
+# the pipeline scripts + BTC-provided source data rather than tracked here.
+data/
+cache/
+indexes/
+models/

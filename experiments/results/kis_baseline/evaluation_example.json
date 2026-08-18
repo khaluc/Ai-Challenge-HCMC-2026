@@ -1,0 +1,30 @@
+{
+  "num_queries": 1,
+  "recalls": {
+    "R@1": 0.0,
+    "R@5": 1.0,
+    "R@20": 1.0,
+    "R@50": 1.0,
+    "R@100": 1.0
+  },
+  "recall_sum": 4.0,
+  "query_score_sum": 0.8,
+  "final_score": 0.8,
+  "per_query": [
+    {
+      "query_id": "example-query-01",
+      "first_relevant_rank": 2,
+      "first_relevant_score": 0.75,
+      "cutoff_hits": {
+        "R@1": false,
+        "R@5": true,
+        "R@20": true,
+        "R@50": true,
+        "R@100": true
+      },
+      "query_score": 0.8
+    }
+  ],
+  "ground_truth": "D:\\Blue AI\\AI Challenge\\examples\\ground_truth.example.csv",
+  "predictions": "D:\\Blue AI\\AI Challenge\\examples\\predictions.example.csv"
+}

@@ -1,0 +1,4 @@
+query_id,rank,video_id,frame_id,score
+example-query-01,1,L21_V002,50,0.80
+example-query-01,2,L21_V001,150,0.75
+

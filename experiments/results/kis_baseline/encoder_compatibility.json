@@ -1,0 +1,46 @@
+{
+  "compatible": true,
+  "model_id": "models\\openai-clip-vit-base-patch32",
+  "revision": null,
+  "resolved_commit": "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268",
+  "threshold": 0.99,
+  "sample_count": 5,
+  "cosine_min": 0.998799204826355,
+  "cosine_mean": 0.9993450045585632,
+  "cosine_max": 0.9997953772544861,
+  "samples": [
+    {
+      "video_id": "L21_V001",
+      "keyframe_index": 1,
+      "keyframe_source": "Keyframes_L21.zip::keyframes/L21_V001/001.jpg",
+      "cosine_similarity": 0.9992150664329529
+    },
+    {
+      "video_id": "L21_V019",
+      "keyframe_index": 237,
+      "keyframe_source": "Keyframes_L21.zip::keyframes/L21_V019/237.jpg",
+      "cosine_similarity": 0.9997539520263672
+    },
+    {
+      "video_id": "L22_V006",
+      "keyframe_index": 280,
+      "keyframe_source": "Keyframes_L22.zip::keyframes/L22_V006/280.jpg",
+      "cosine_similarity": 0.998799204826355
+    },
+    {
+      "video_id": "L22_V023",
+      "keyframe_index": 43,
+      "keyframe_source": "Keyframes_L22.zip::keyframes/L22_V023/043.jpg",
+      "cosine_similarity": 0.9997953772544861
+    },
+    {
+      "video_id": "L23_V025",
+      "keyframe_index": 241,
+      "keyframe_source": "Keyframes_L23.zip::keyframes/L23_V025/241.jpg",
+      "cosine_similarity": 0.9991614818572998
+    }
+  ],
+  "interpretation": "A high cosine confirms that the checkpoint and image preprocessing match the organizer-provided CLIP feature space.",
+  "weights_sha256": "a63082132ba4f97a80bea76823f544493bffa8082296d62d71581a4feff1576f",
+  "checkpoint_repo_id": "openai/clip-vit-base-patch32"
+}

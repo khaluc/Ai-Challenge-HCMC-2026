@@ -1,0 +1,100 @@
+{
+  "pipeline": "CLIP + metadata BM25 + object co-occurrence -> late fusion -> Top-100",
+  "fusion": {
+    "semantic_candidates": 500,
+    "metadata_video_candidates": 30,
+    "metadata_frames_per_video": 3,
+    "object_candidates": 300,
+    "object_min_confidence": 0.3,
+    "fusion_method": "rrf",
+    "rrf_k": 60,
+    "weights": {
+      "semantic": 1.0,
+      "metadata": 0.0,
+      "objects": 0.0
+    },
+    "metadata_enabled": false,
+    "objects_enabled": false
+  },
+  "encoder": {
+    "backend": "transformers.CLIPTextModelWithProjection",
+    "model_id": "models\\openai-clip-vit-base-patch32",
+    "revision": null,
+    "resolved_commit": "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268",
+    "dimension": 512,
+    "max_length": 77,
+    "device": "cpu",
+    "dtype": "float32",
+    "l2_normalized": true,
+    "cache_dir": "D:\\Blue AI\\AI Challenge\\models\\huggingface",
+    "weights_sha256": "a63082132ba4f97a80bea76823f544493bffa8082296d62d71581a4feff1576f",
+    "checkpoint_repo_id": "openai/clip-vit-base-patch32"
+  },
+  "artifacts": {
+    "root": "D:\\Blue AI\\AI Challenge\\artifacts\\phase1",
+    "vectors": 177321,
+    "dimension": 512,
+    "metadata_documents": 873,
+    "asr_or_transcript_available": false,
+    "object_classes": 533,
+    "object_index_min_confidence": 0.2
+  },
+  "queries": 2,
+  "hits": 200,
+  "top_k": 100,
+  "elapsed_seconds": 10.826,
+  "per_query": [
+    {
+      "query_id": "smoke-news-01",
+      "analysis": {
+        "text": "a television news presenter in a studio",
+        "metadata_terms": [
+          "television",
+          "news",
+          "presenter",
+          "studio"
+        ],
+        "object_concepts": [
+          "television"
+        ]
+      },
+      "branch_counts": {
+        "semantic": 500,
+        "metadata": 0,
+        "objects": 0
+      },
+      "hits": 100
+    },
+    {
+      "query_id": "smoke-food-01",
+      "analysis": {
+        "text": "a close-up bowl of food on a dining table",
+        "metadata_terms": [
+          "close",
+          "up",
+          "bowl",
+          "food",
+          "dining",
+          "table"
+        ],
+        "object_concepts": [
+          "table",
+          "bowl",
+          "food"
+        ]
+      },
+      "branch_counts": {
+        "semantic": 500,
+        "metadata": 0,
+        "objects": 0
+      },
+      "hits": 100
+    }
+  ],
+  "submission_frame": "Video_Frame_ID from the canonical Phase 1 mapping",
+  "deduplication": "(video_id, Video_Frame_ID)",
+  "query_file": "D:\\Blue AI\\AI Challenge\\examples\\queries.smoke.csv",
+  "predictions_file": "D:\\Blue AI\\AI Challenge\\artifacts\\phase3\\clip_only_predictions.csv",
+  "submission_files": [],
+  "submission_zip": null
+}

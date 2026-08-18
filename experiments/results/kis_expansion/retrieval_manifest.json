@@ -1,0 +1,152 @@
+{
+  "pipeline": "LLM/rule query understanding -> expansions -> hybrid search -> RRF -> Top-100",
+  "expansion_config": {
+    "max_expansions": 4,
+    "candidates_per_expansion": 100,
+    "rrf_k": 60
+  },
+  "hybrid_config": {
+    "semantic_candidates": 500,
+    "metadata_video_candidates": 30,
+    "metadata_frames_per_video": 3,
+    "object_candidates": 300,
+    "object_min_confidence": 0.3,
+    "fusion_method": "rrf",
+    "rrf_k": 60,
+    "weights": {
+      "semantic": 1.0,
+      "metadata": 0.65,
+      "objects": 0.8
+    },
+    "metadata_enabled": true,
+    "objects_enabled": true
+  },
+  "encoder": {
+    "backend": "transformers.CLIPTextModelWithProjection",
+    "model_id": "models\\openai-clip-vit-base-patch32",
+    "revision": null,
+    "resolved_commit": "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268",
+    "dimension": 512,
+    "max_length": 77,
+    "device": "cpu",
+    "dtype": "float32",
+    "l2_normalized": true,
+    "cache_dir": "D:\\Blue AI\\AI Challenge\\models\\huggingface",
+    "weights_sha256": "a63082132ba4f97a80bea76823f544493bffa8082296d62d71581a4feff1576f",
+    "checkpoint_repo_id": "openai/clip-vit-base-patch32"
+  },
+  "artifacts": {
+    "root": "D:\\Blue AI\\AI Challenge\\artifacts\\phase1",
+    "vectors": 177321,
+    "dimension": 512,
+    "metadata_documents": 873,
+    "object_classes": 533,
+    "object_index_min_confidence": 0.2
+  },
+  "queries": 3,
+  "hits": 300,
+  "top_k": 100,
+  "elapsed_seconds": 106.651,
+  "per_query": [
+    {
+      "query_id": "hybrid-object-01",
+      "understanding": {
+        "text": "một người mặc áo đỏ đứng cạnh ô tô",
+        "structure": {
+          "objects": [
+            "person",
+            "car"
+          ],
+          "attributes": {
+            "person": [
+              "red"
+            ]
+          },
+          "relation": "next_to"
+        },
+        "expansions": [
+          "một người mặc áo đỏ đứng cạnh ô tô",
+          "a person in red clothing standing next to a car",
+          "someone wearing a red shirt beside a car",
+          "person dressed in red near an automobile"
+        ]
+      },
+      "expansion_counts": {
+        "e0": 100,
+        "e1": 100,
+        "e2": 100,
+        "e3": 100
+      },
+      "hits": 100
+    },
+    {
+      "query_id": "hybrid-metadata-01",
+      "understanding": {
+        "text": "60 Giây Sáng 01082024 HTV Tin Tức",
+        "structure": {
+          "objects": [
+            "person",
+            "television"
+          ],
+          "attributes": {},
+          "relation": null
+        },
+        "expansions": [
+          "60 Giây Sáng 01082024 HTV Tin Tức",
+          "60 seconds morning news August 1 2024 HTV news broadcast",
+          "HTV news program 60 seconds morning edition 01/08/2024",
+          "Vietnamese television news broadcast 60 seconds morning"
+        ]
+      },
+      "expansion_counts": {
+        "e0": 100,
+        "e1": 100,
+        "e2": 100,
+        "e3": 100
+      },
+      "hits": 100
+    },
+    {
+      "query_id": "hybrid-semantic-01",
+      "understanding": {
+        "text": "a television news presenter in a studio",
+        "structure": {
+          "objects": [
+            "person",
+            "television",
+            "studio"
+          ],
+          "attributes": {
+            "person": [
+              "presenter"
+            ]
+          },
+          "relation": "inside"
+        },
+        "expansions": [
+          "a television news presenter in a studio",
+          "tv news anchor in a studio",
+          "news presenter standing in television studio",
+          "television broadcaster inside news studio"
+        ]
+      },
+      "expansion_counts": {
+        "e0": 100,
+        "e1": 100,
+        "e2": 100,
+        "e3": 100
+      },
+      "hits": 100
+    }
+  ],
+  "submission_frame": "Video_Frame_ID from the canonical Phase 1 mapping",
+  "deduplication": "(video_id, Video_Frame_ID)",
+  "query_file": "D:\\Blue AI\\AI Challenge\\examples\\queries.hybrid.smoke.csv",
+  "predictions_file": "D:\\Blue AI\\AI Challenge\\artifacts\\phase4\\predictions.csv",
+  "submission_files": [
+    "D:\\Blue AI\\AI Challenge\\artifacts\\phase4\\submission\\hybrid-object-01.csv",
+    "D:\\Blue AI\\AI Challenge\\artifacts\\phase4\\submission\\hybrid-metadata-01.csv",
+    "D:\\Blue AI\\AI Challenge\\artifacts\\phase4\\submission\\hybrid-semantic-01.csv"
+  ],
+  "submission_zip": "D:\\Blue AI\\AI Challenge\\artifacts\\phase4\\submission.zip"
+}

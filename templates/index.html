@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>BTC/AIC HCMC 2026 — Retrieval</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+
+    <aside class="control-rail">
+      <div class="brand">
+        <span class="brand-name">AIC</span><span class="brand-year">2026</span>
+        <span class="brand-sub">HCMC AI Challenge</span>
+      </div>
+
+      <div class="query-tabs" id="query-tabs">
+        <button type="button" data-type="kis" class="active">KIS</button>
+        <button type="button" data-type="qna">Q&amp;A</button>
+        <button type="button" data-type="trake">TRAKE</button>
+      </div>
+
+      <div class="rail-status-row">
+        <div class="system-status" id="system-status">
+          <span class="dot"></span>
+          <span id="system-status-text">SYSTEM READY</span>
+        </div>
+        <button type="button" class="icon-toggle" id="theme-toggle" title="Toggle theme">&#9789;</button>
+      </div>
+
+      <section class="search-bar">
+        <form id="search-form">
+          <div class="query-slot">
+            <input type="text" id="query-input" name="query" placeholder="Nhập query..." autocomplete="off">
+            <div id="trake-query-builder" class="trake-query-builder hidden">
+              <div id="trake-event-rows"></div>
+              <button type="button" id="trake-add-event" class="ghost-btn">&#43; Thêm Event</button>
+            </div>
+          </div>
+          <button type="submit">&#128269; SEARCH</button>
+        </form>
+        <div class="chip-row">
+          <span class="chip on" title="Luôn bật — pipeline hợp nhất 3 nhánh cho mọi truy vấn"><span class="chip-dot"></span>CLIP</span>
+          <span class="chip on" title="Luôn bật — pipeline hợp nhất 3 nhánh cho mọi truy vấn"><span class="chip-dot"></span>BM25</span>
+          <span class="chip on" title="Luôn bật — pipeline hợp nhất 3 nhánh cho mọi truy vấn"><span class="chip-dot"></span>Objects</span>
+          <button type="button" class="chip chip-toggle" id="chip-expansion" title="Bật LLM query expansion (Qwen) trước khi search — chậm hơn nhưng hiểu query tốt hơn"><span class="chip-dot"></span>LLM Expansion</button>
+          <button type="button" class="filters-btn" id="filters-btn">&#9881; Filters</button>
+          <div class="filters-popover hidden" id="filters-popover">
+            <label><input type="checkbox" id="mode-debug"> Debug scores</label>
+            <label><input type="checkbox" id="mode-competition"> Competition Mode</label>
+          </div>
+        </div>
+        <p class="hint hidden" id="trake-hint">TRAKE cần chuỗi sự kiện theo đúng thứ tự xảy ra trong video — mỗi event một dòng riêng, hệ thống sẽ ghép thành "E1: ... E2: ..." rồi nhờ LLM tách + tìm frame cho từng event.</p>
+        <p id="search-status" class="search-status-row"></p>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="body-grid">
+        <section class="results-panel">
+          <div class="results-header">
+            <span class="results-title">SEARCH RESULTS</span>
+            <span class="badge-pill" id="results-topk-badge">Top 20</span>
+            <span class="results-meta" id="results-meta"></span>
+            <div class="results-header-spacer"></div>
+            <button type="button" class="ghost-btn" id="csv-export-btn">&#8681; Export CSV</button>
+            <button type="button" class="ghost-btn" id="view-stats-btn">&#128200; View Stats</button>
+          </div>
+
+          <div class="results-list" id="results-list">
+            <div id="candidate-grid"></div>
+
+            <div id="qna-panel" class="qna-panel hidden">
+              <h3>VLM Answers</h3>
+              <p class="hint" id="qna-scene-description"></p>
+              <div id="qna-answers"></div>
+              <h3>Candidate Frames <span class="hint">(tick để hỏi thủ công)</span></h3>
+              <div id="qna-candidate-grid"></div>
+              <div class="qna-ask-bar">
+                <button id="qna-ask-btn" type="button">ASK VLM</button>
+                <span id="qna-ask-status" class="status"></span>
+              </div>
+            </div>
+
+            <div id="trake-panel" class="trake-panel hidden">
+              <div id="trake-video-candidates" class="debug-only"></div>
+              <div id="trake-events"></div>
+              <div class="timeline">
+                <div id="timeline-content" class="placeholder">Chưa có kết quả TRAKE — timeline sẽ hiện ở đây</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="results-pagination hidden" id="results-pagination"></div>
+        </section>
+
+        <aside class="preview-panel">
+          <div class="preview-header">
+            <h3>PREVIEW &amp; DETAILS</h3>
+            <button type="button" class="icon-toggle" id="preview-expand" title="Mở rộng panel">&#10021;</button>
+          </div>
+
+          <div class="player-wrap">
+            <video id="video-el"></video>
+          </div>
+          <div class="player-controls">
+            <button type="button" class="icon-btn" id="play-toggle">&#9654;</button>
+            <button type="button" class="icon-btn" id="mute-toggle">&#128266;</button>
+            <input type="range" id="seek-bar" min="0" max="1000" value="0" step="1">
+            <span id="time-label">00:00 / 00:00</span>
+            <button type="button" class="icon-btn" id="fullscreen-toggle" title="Fullscreen">&#10021;</button>
+          </div>
+          <div class="frame-nav">
+            <button data-nav="-10">-10f</button>
+            <button data-nav="-5">-5f</button>
+            <button data-nav="-1">-1f</button>
+            <button data-nav="-1s">-1s</button>
+            <button data-nav="play">&#9654;/&#10074;&#10074;</button>
+            <button data-nav="+1s">+1s</button>
+            <button data-nav="+1">+1f</button>
+            <button data-nav="+5">+5f</button>
+            <button data-nav="+10">+10f</button>
+          </div>
+          <p class="hint">Phím tắt: A/D = ±1 frame, Shift+A/D = ±10 frame, Space = play/pause</p>
+
+          <div class="preview-idline">
+            <span id="info-video-id">—</span>
+            <span id="info-keyframe-badge"></span>
+          </div>
+
+          <div class="preview-stat-grid">
+            <div class="stat-tile">
+              <div class="stat-label">Frame ID</div>
+              <div class="stat-value" id="info-frame-id">—</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-label">Timestamp</div>
+              <div class="stat-value" id="info-time">—</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-label">Keyframe Index</div>
+              <div class="stat-value" id="info-keyframe-index">—</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-label">FAISS Index</div>
+              <div class="stat-value" id="info-faiss-index">—</div>
+            </div>
+          </div>
+
+          <div class="detail-card" id="score-breakdown-card">
+            <h4>Score Breakdown</h4>
+            <div id="score-breakdown-body"><div class="empty-note">Chọn một kết quả để xem chi tiết điểm số</div></div>
+          </div>
+
+          <div class="detail-card" id="match-info-card">
+            <h4>Match Info</h4>
+            <div id="match-info-body"><div class="empty-note">—</div></div>
+          </div>
+
+          <div class="detail-card" id="objects-card">
+            <h4>Objects &amp; Concepts</h4>
+            <div id="objects-body"><div class="empty-note">—</div></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+  </div>
+
+  <div class="modal-overlay hidden" id="stats-modal">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="stats-modal-close">&times;</button>
+      <h3>Result Stats</h3>
+      <div id="stats-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

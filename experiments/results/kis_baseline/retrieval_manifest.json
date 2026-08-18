@@ -1,0 +1,36 @@
+{
+  "pipeline": "text -> CLIP text projection -> L2 normalize -> FAISS IndexFlatIP -> FAISS_Index mapping",
+  "encoder": {
+    "backend": "transformers.CLIPTextModelWithProjection",
+    "model_id": "models\\openai-clip-vit-base-patch32",
+    "revision": null,
+    "resolved_commit": "3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268",
+    "dimension": 512,
+    "max_length": 77,
+    "device": "cpu",
+    "dtype": "float32",
+    "l2_normalized": true,
+    "cache_dir": "D:\\Blue AI\\AI Challenge\\models\\huggingface",
+    "weights_sha256": "a63082132ba4f97a80bea76823f544493bffa8082296d62d71581a4feff1576f",
+    "checkpoint_repo_id": "openai/clip-vit-base-patch32"
+  },
+  "index": {
+    "path": "D:\\Blue AI\\AI Challenge\\artifacts\\phase1\\clip\\faiss.index",
+    "mapping": "D:\\Blue AI\\AI Challenge\\artifacts\\phase1\\catalog\\frame_mapping.parquet",
+    "vectors": 177321,
+    "dimension": 512
+  },
+  "queries": 2,
+  "hits": 200,
+  "top_k": 100,
+  "elapsed_seconds": 9.347,
+  "deduplication": "(video_id, Video_Frame_ID), preserving the highest-ranked hit",
+  "submission_frame": "Video_Frame_ID from the Phase 1 canonical mapping",
+  "query_file": "D:\\Blue AI\\AI Challenge\\examples\\queries.smoke.csv",
+  "predictions_file": "D:\\Blue AI\\AI Challenge\\artifacts\\phase2\\smoke_predictions.csv",
+  "submission_files": [
+    "D:\\Blue AI\\AI Challenge\\artifacts\\phase2\\submission\\smoke-news-01.csv",
+    "D:\\Blue AI\\AI Challenge\\artifacts\\phase2\\submission\\smoke-food-01.csv"
+  ],
+  "submission_zip": "D:\\Blue AI\\AI Challenge\\artifacts\\phase2\\submission.zip"
+}

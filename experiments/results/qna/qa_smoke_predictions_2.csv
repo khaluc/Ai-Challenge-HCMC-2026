@@ -1,0 +1,4 @@
+query_id,rank,route,video_id,frame_id,answer,confidence,note
+qa-smoke-02,1,visual,L25_V087,27600,Không có,0.9,
+qa-smoke-02,2,visual,L25_V087,28050,Không có,0.9,
+qa-smoke-02,3,visual,L25_V087,29100,Không có,0.85,

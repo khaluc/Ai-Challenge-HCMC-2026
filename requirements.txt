@@ -1,0 +1,9 @@
+faiss-cpu>=1.7.4
+numpy>=1.24
+Pillow>=10
+pyarrow>=12
+pytest>=7
+torch>=2.0
+transformers>=4.45,<5
+Flask>=3.0
+PyYAML>=6.0

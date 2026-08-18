@@ -1,0 +1,43 @@
+# Paths are resolved relative to the repository root (where app.py lives).
+paths:
+  indexes: indexes
+  data: data
+  model_dir: models/openai-clip-vit-base-patch32
+  cache_dir: models/huggingface
+  video_cache_dir: cache/videos
+
+model:
+  device: cpu
+  allow_download: false
+  batch_size: 32
+
+llm:
+  model: qwen3.8-max
+  base_url: null
+
+# Qwen vision (image) calls take ~20-30s each on this API — much slower than
+# text-only calls (~3-4s). Q&A/TRAKE-verify latency is bounded by
+# frame_limit / max_candidate_frames sequential VLM calls, so these are kept
+# small for an interactive web UI (Phase 5's own CLI default of 30 is fine
+# offline/batch, but would take 15+ minutes per query here). Raise them if
+# you want higher recall and can wait longer.
+qna:
+  video_limit: 5
+  frame_limit: 5
+  search_top_k: 100
+  answers_top_k: 5
+
+trake:
+  video_limit: 5
+  window_seconds: 2.5
+  step_seconds: 0.5
+  max_candidate_frames: 6
+
+server:
+  host: 127.0.0.1
+  port: 5000
+  debug: true
+
+retrieval:
+  default_top_k: 20
+  thumbnail_width: 240
