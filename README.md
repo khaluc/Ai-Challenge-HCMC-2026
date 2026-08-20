@@ -185,4 +185,52 @@ Tối ưu ranking Top-100 theo tier: Rank 1-5 tuyệt đối không đánh đổ
 
 ## Web UI
 
-Flask app (`app.py`, `templates/`, `static/`) theo spec 24 mục — cả 7 milestone (KIS, video player + frame nav, submission queue, Q&A, TRAKE decompose→retrieval→align→refine→verify, ranking editor, Competition/Debug mode) đã xây và chạy thật với dữ liệu + Qwen API thật. Chi tiết kiến trúc, route, kết quả chạy thật và giới hạn đã biết trong [`WEBAPP.md`](WEBAPP.md).
+Flask app (`app.py`, `templates/`, `static/`) theo spec 24 mục — cả 7 milestone (KIS, video player + frame nav, submission queue, Q&A, TRAKE decompose→retrieval→align→refine→verify, ranking editor, Competition/Debug mode) đã xây và chạy thật với dữ liệu + Qwen API thật. Chi tiết kiến trúc, route, kết quả chạy thật và giới hạn đã biết trong [`WEBAPP.md`](WEBAPP.md). Luồng xử lý chi tiết của cả 3 kiểu truy vấn (KIS/Q&A/TRAKE) — từ dữ liệu BTC cấp tới lúc ra kết quả — nằm trong [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Chạy trên máy khác (đồng đội đã có dataset BTC)
+
+Repo GitHub chỉ chứa **code** (~1.3MB) — `data/` (~107GB), `indexes/` (~1.6GB), `models/` (~1.2GB) và `.env` (chứa API key) đều bị `.gitignore`, không nằm trong repo. Máy mới cần tự dựng lại 4 phần này.
+
+1. **Clone code:**
+   ```powershell
+   git clone https://github.com/khaluc/Ai-Challenge-HCMC-2026.git
+   cd Ai-Challenge-HCMC-2026
+   ```
+
+2. **Cài Python 3.10+ và dependency** (bản `requirements.txt` đã sửa đủ, bao gồm cả `openai`/`python-dotenv` cho Qwen — nếu dùng bản cũ hơn commit này thì thiếu 2 package đó):
+   ```powershell
+   python -m pip install -e ".[llm,video]"
+   ```
+   (hoặc `python -m pip install -r requirements.txt` nếu không cần cài editable)
+
+3. **Đặt dataset BTC đúng layout** — copy/liên kết dataset của đồng đội vào:
+   ```
+   data/batch_1/{Keyframes,Videos,Objects,Metadata,CLIP_features}/*.zip
+   ```
+   Giữ nguyên dạng ZIP, **không giải nén** — pipeline đọc trực tiếp qua `zipfile`.
+
+4. **Lấy checkpoint CLIP** (một trong hai cách):
+   ```powershell
+   python -m kis.baseline_cli prepare-model
+   ```
+   (tải đúng bản OpenAI CLIP ViT-B/32 đã pin sẵn), hoặc copy thẳng thư mục `models/openai-clip-vit-base-patch32/` từ máy đã có.
+
+5. **Build index từ dataset** (chạy 1 lần, ra `indexes/`, ~1.6GB, mất vài phút tùy máy):
+   ```powershell
+   python -m data_processing.cli build --data-root data --output indexes --object-index-min-confidence 0.2
+   python -m data_processing.cli validate --artifacts indexes
+   ```
+   Nếu muốn bỏ qua bước build (nhanh hơn), có thể xin trực tiếp thư mục `indexes/` đã build sẵn (chỉ 1.6GB, dễ chuyển qua USB/cloud hơn nhiều so với 107GB `data/`) rồi đặt đúng vị trí `indexes/` ở gốc repo.
+
+6. **Tạo `.env` riêng** (không dùng chung key với máy khác — mỗi người nên có key riêng để tính phí/giới hạn tách bạch):
+   ```
+   DASHSCOPE_API_KEY=sk-...
+   ```
+
+7. **Chạy web app:**
+   ```powershell
+   python app.py
+   ```
+   Lần đầu load CLIP+FAISS mất ~20-40s trước khi `http://127.0.0.1:5000/` phản hồi (xem thêm mục "Chạy thử" trong [`WEBAPP.md`](WEBAPP.md) về việc debug reloader load model 2 lần).
+
+`cache/` (video đã giải nén tạm) **không cần copy** — tự sinh lại khi phát video lần đầu, xóa an toàn bất cứ lúc nào.

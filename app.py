@@ -351,6 +351,27 @@ def search_trake():
     return jsonify(result)
 
 
+@app.post("/trake/align")
+def trake_align():
+    """Coarse-align an ordered event list against a specific candidate video —
+    lets the UI switch the Event Panel to any candidate chip, not just the
+    top-ranked one `/search/trake` aligns automatically."""
+    payload = request.get_json(silent=True) or {}
+    video_id = str(payload.get("video_id") or "").strip()
+    events = [str(event).strip() for event in (payload.get("events") or []) if str(event).strip()]
+    if not video_id or not events:
+        return jsonify({"error": "video_id and events are required"}), 400
+    try:
+        trake = get_trake_service()
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 503
+    try:
+        result = trake.align(video_id, events)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(result)
+
+
 @app.post("/refine")
 def refine_frame():
     """Dense frame grid around a coarse event position (spec section 13), no VLM yet."""

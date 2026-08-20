@@ -12,7 +12,7 @@ const state = {
   expandOn: false,
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 30;
 
 // ---------- DOM refs ----------
 
@@ -660,6 +660,28 @@ function eventCard(event, index, videoId) {
   return card;
 }
 
+function renderTrakeAlignment(videoId, alignment) {
+  trakeEvents.innerHTML = "";
+  if (!alignment || !alignment.feasible) {
+    trakeEvents.innerHTML = `<div class="status error">Không tìm được alignment khả thi cho ${videoId}.</div>`;
+    renderTimeline([]);
+    return;
+  }
+  state.trake.videoId = videoId;
+  state.trake.assignments = alignment.assignments;
+  alignment.assignments.forEach((event, index) => {
+    trakeEvents.appendChild(eventCard(event, index, videoId));
+  });
+  renderTimeline(alignment.assignments);
+  loadVideo(videoId, alignment.assignments[0].frame_id, alignment.assignments[0].timestamp);
+}
+
+function setActiveTrakeChip(videoId) {
+  trakeVideoCandidates.querySelectorAll(".trake-video-card").forEach((chip) => {
+    chip.classList.toggle("active", chip.dataset.videoId === videoId);
+  });
+}
+
 async function runTrake(query) {
   trakePanel.classList.remove("hidden");
   grid.classList.add("hidden");
@@ -671,11 +693,32 @@ async function runTrake(query) {
     const data = await postJSON("/search/trake", { query });
     trakeEvents.innerHTML = "";
 
+    state.trake = { videoId: null, assignments: [], eventTexts: data.event_sequence.events };
+
     trakeVideoCandidates.innerHTML = "<strong>Candidate videos:</strong> ";
     data.candidates.forEach((candidate) => {
-      const chip = document.createElement("span");
+      const chip = document.createElement("button");
+      chip.type = "button";
       chip.className = "trake-video-card";
+      chip.dataset.videoId = candidate.video_id;
       chip.textContent = `${candidate.video_id} (score ${candidate.total_score.toFixed(3)})`;
+      chip.addEventListener("click", async () => {
+        if (chip.classList.contains("active")) return;
+        const originalText = chip.textContent;
+        chip.textContent = `${candidate.video_id} — đang align...`;
+        try {
+          const alignment = await postJSON("/trake/align", {
+            video_id: candidate.video_id,
+            events: state.trake.eventTexts,
+          });
+          setActiveTrakeChip(candidate.video_id);
+          renderTrakeAlignment(candidate.video_id, alignment);
+        } catch (error) {
+          trakeEvents.innerHTML = `<div class="status error">${error.message}</div>`;
+        } finally {
+          chip.textContent = originalText;
+        }
+      });
       trakeVideoCandidates.appendChild(chip);
     });
 
@@ -686,12 +729,8 @@ async function runTrake(query) {
     }
 
     const videoId = data.top_alignment.video_id;
-    state.trake = { videoId, events: data.top_alignment.assignments };
-    data.top_alignment.assignments.forEach((event, index) => {
-      trakeEvents.appendChild(eventCard(event, index, videoId));
-    });
-    renderTimeline(data.top_alignment.assignments);
-    loadVideo(videoId, data.top_alignment.assignments[0].frame_id, data.top_alignment.assignments[0].timestamp);
+    setActiveTrakeChip(videoId);
+    renderTrakeAlignment(videoId, data.top_alignment);
   } catch (error) {
     trakeEvents.innerHTML = `<div class="status error">${error.message}</div>`;
   }
