@@ -41,9 +41,14 @@ const infoFrameId = document.getElementById("info-frame-id");
 const infoTime = document.getElementById("info-time");
 const infoKeyframeIndex = document.getElementById("info-keyframe-index");
 const infoFaissIndex = document.getElementById("info-faiss-index");
+const showAllFramesBtn = document.getElementById("show-all-frames-btn");
 
 const resultsList = document.getElementById("results-list");
 const resultsPagination = document.getElementById("results-pagination");
+const videoFramesPanel = document.getElementById("video-frames-panel");
+const videoFramesGrid = document.getElementById("video-frames-grid");
+const videoFramesTitle = document.getElementById("video-frames-title");
+const videoFramesBackBtn = document.getElementById("video-frames-back-btn");
 const resultsMeta = document.getElementById("results-meta");
 const resultsTopkBadge = document.getElementById("results-topk-badge");
 const csvExportBtn = document.getElementById("csv-export-btn");
@@ -143,7 +148,13 @@ async function loadVideo(videoId, frameId, timestamp) {
   infoVideoId.textContent = videoId;
   infoFrameId.textContent = frameId != null ? frameId : "—";
   updateTimeInfo();
+  showAllFramesBtn.disabled = false;
 }
+
+showAllFramesBtn.addEventListener("click", () => {
+  if (!state.videoId) return;
+  showAllVideoFrames(state.videoId, state.frameId);
+});
 
 function updateTimeInfo() {
   infoTime.textContent = fmtTime(videoEl.currentTime);
@@ -332,6 +343,55 @@ function selectRow(card) {
   }
   card.classList.add("selected");
 }
+
+async function showAllVideoFrames(videoId, currentFrameId) {
+  grid.classList.add("hidden");
+  qnaPanel.classList.add("hidden");
+  trakePanel.classList.add("hidden");
+  resultsPagination.classList.add("hidden");
+  videoFramesPanel.classList.remove("hidden");
+  videoFramesTitle.textContent = `Đang tải frame của ${videoId}...`;
+  videoFramesGrid.innerHTML = "";
+  try {
+    const data = await getJSON(`/api/video/${encodeURIComponent(videoId)}/frames`);
+    videoFramesTitle.textContent = `${videoId} — ${data.count} frame`;
+    data.frames.forEach((frame) => {
+      const tile = document.createElement("div");
+      tile.className = "result-tile";
+      if (frame.frame_id === currentFrameId) tile.classList.add("selected");
+      const img = document.createElement("img");
+      img.className = "tile-thumb";
+      img.loading = "lazy";
+      img.src = `/frame/${videoId}/${frame.frame_id}?w=160`;
+      img.alt = `${videoId} frame ${frame.frame_id}`;
+      tile.appendChild(img);
+      const caption = document.createElement("div");
+      caption.className = "tile-caption";
+      caption.innerHTML = `<div class="tile-meta">Frame ${frame.frame_id} &middot; ${fmtTime(frame.timestamp)}</div>`;
+      tile.appendChild(caption);
+      tile.addEventListener("click", () => {
+        videoFramesGrid.querySelectorAll(".result-tile.selected").forEach((el) => el.classList.remove("selected"));
+        tile.classList.add("selected");
+        loadVideo(videoId, frame.frame_id, frame.timestamp);
+      });
+      videoFramesGrid.appendChild(tile);
+    });
+  } catch (error) {
+    videoFramesTitle.textContent = `Lỗi: ${error.message}`;
+  }
+}
+
+videoFramesBackBtn.addEventListener("click", () => {
+  videoFramesPanel.classList.add("hidden");
+  if (state.queryType === "qna") {
+    qnaPanel.classList.remove("hidden");
+  } else if (state.queryType === "trake") {
+    trakePanel.classList.remove("hidden");
+  } else {
+    grid.classList.remove("hidden");
+    if (state.kisResults.length > PAGE_SIZE) resultsPagination.classList.remove("hidden");
+  }
+});
 
 function candidateCard(hit, { checkbox = false, rank = null } = {}) {
   const card = document.createElement("div");
@@ -918,6 +978,7 @@ form.addEventListener("submit", async (event) => {
   resultsPagination.classList.add("hidden");
   qnaPanel.classList.add("hidden");
   trakePanel.classList.add("hidden");
+  videoFramesPanel.classList.add("hidden");
   setStatus("Đang tìm...");
 
   const startedAt = performance.now();

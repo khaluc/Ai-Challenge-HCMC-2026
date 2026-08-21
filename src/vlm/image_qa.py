@@ -78,7 +78,7 @@ class QwenVLAnswerer:
         model: str = "qwen3.8-max",
         base_url: str | None = None,
         api_key: str | None = None,
-        max_tokens: int = 512,
+        max_tokens: int = 1024,
     ) -> None:
         if client is None:
             import openai  # local import: optional dependency
@@ -112,6 +112,11 @@ class QwenVLAnswerer:
             model=self._model,
             max_tokens=self._max_tokens,
             response_format={"type": "json_object"},
+            # Reasoning-capable models (e.g. DeepSeek) can burn the entire
+            # max_tokens budget on hidden chain-of-thought and return an empty
+            # `content` for a short structured-output task like this one —
+            # not needed here, so switch it off.
+            extra_body={"enable_thinking": False},
             messages=[
                 {"role": "system", "content": system_prompt},
                 {

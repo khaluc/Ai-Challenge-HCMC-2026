@@ -169,8 +169,18 @@ class CoarseTemporalAligner:
 
         ordered = sorted(per_event[0].values(), key=lambda item: item[0].keyframe_index)
         frames = [item[0] for item in ordered]
+        # `frames` is anchored on event 0's own top-`max_frames_per_video`
+        # matches; a later event's independently-ranked top-K can legitimately
+        # omit one of those keyframe_index values (this is routine once a
+        # video's real frame count exceeds the cap, and also happens on any
+        # video with a duplicate Video_Frame_ID — the per-video dedup in
+        # `Phase1HybridStore.best_frames_in_video` keys on Video_Frame_ID, so
+        # two events can each "win" a different keyframe_index for the same
+        # duplicated frame id). Treat a missing entry as "no evidence this
+        # frame matches this event" (score 0.0) rather than raising KeyError.
         similarity = [
-            [per_event[i][frame.keyframe_index][1] for frame in frames] for i in range(len(events))
+            [per_event[i].get(frame.keyframe_index, (None, 0.0))[1] for frame in frames]
+            for i in range(len(events))
         ]
         return align_events(events, frames, similarity, video_id=video_id, config=self.config)
 

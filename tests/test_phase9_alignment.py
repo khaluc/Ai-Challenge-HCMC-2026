@@ -155,3 +155,36 @@ def test_coarse_temporal_aligner_raises_on_empty_events(
     aligner = CoarseTemporalAligner(store, _EventVectorEncoder())
     with pytest.raises(ValueError):
         aligner.align("L21_V001", [])
+
+
+class _PartialCoverageEncoder:
+    """"event-a" and "event-b" are distinguished by which axis is 1.0."""
+
+    def encode(self, texts: list[str]) -> np.ndarray:
+        vectors = {"event-a": [1.0, 0.0], "event-b": [0.0, 1.0]}
+        return np.asarray([vectors[text] for text in texts], dtype=np.float32)
+
+
+class _PartialCoverageStore:
+    """Each event's own top-K ranking omits a frame the other event's top-K
+    included — reproduces the real dataset's duplicate Video_Frame_ID dedup
+    quirk (`README.md`: 614 rows across 192 videos) without needing a real
+    build. `keyframe_index=5` only ever shows up for "event-a"'s query."""
+
+    def best_frames_in_video(self, video_id: str, vector: np.ndarray, *, limit: int):
+        if float(vector[0]) > 0.5:  # "event-a"
+            return [(_frame(5, 50), 0.9), (_frame(1, 10), 0.3)]
+        return [(_frame(1, 10), 0.8), (_frame(2, 20), 0.4)]  # "event-b"
+
+
+def test_coarse_temporal_aligner_tolerates_frame_missing_from_one_events_topk() -> None:
+    # Regression: event-a's top-K anchors `frames` on keyframe_index=5, but
+    # event-b's independently-ranked top-K never returned that frame. Before
+    # the fix, looking up event-b's score for keyframe_index=5 raised
+    # `KeyError: 5` instead of aligning.
+    aligner = CoarseTemporalAligner(_PartialCoverageStore(), _PartialCoverageEncoder())
+
+    result = aligner.align("L21_V001", ["event-a", "event-b"])
+
+    assert result.feasible
+    assert len(result.assignments) == 2

@@ -74,6 +74,36 @@ def build_frame_index(mapping_path: Path) -> dict[tuple[str, int], str]:
     return index
 
 
+def build_video_frames_index(mapping_path: Path) -> dict[str, list[dict]]:
+    """Map Video_ID -> every available frame in that video, ordered by
+    Video_Frame_ID, for the "all frames of this video" browser."""
+    table = pq.read_table(
+        mapping_path,
+        columns=["Video_ID", "Video_Frame_ID", "Timestamp", "Keyframe_Index", "Keyframe_Available"],
+    )
+    grouped: dict[str, dict[int, dict]] = {}
+    for video_id, frame_id, timestamp, keyframe_index, available in zip(
+        table.column("Video_ID").to_pylist(),
+        table.column("Video_Frame_ID").to_pylist(),
+        table.column("Timestamp").to_pylist(),
+        table.column("Keyframe_Index").to_pylist(),
+        table.column("Keyframe_Available").to_pylist(),
+    ):
+        if not available:
+            continue
+        bucket = grouped.setdefault(video_id, {})
+        if frame_id not in bucket:
+            bucket[frame_id] = {
+                "frame_id": frame_id,
+                "timestamp": timestamp,
+                "keyframe_index": keyframe_index,
+            }
+    return {
+        video_id: sorted(frames.values(), key=lambda frame: frame["frame_id"])
+        for video_id, frames in grouped.items()
+    }
+
+
 config = load_config()
 paths_cfg = config["paths"]
 model_cfg = config["model"]
@@ -96,6 +126,7 @@ pipeline = KISPipeline(
     batch_size=model_cfg["batch_size"],
 )
 frame_index = build_frame_index(INDEXES_ROOT / "catalog" / "frame_mapping.parquet")
+video_frames_index = build_video_frames_index(INDEXES_ROOT / "catalog" / "frame_mapping.parquet")
 video_catalog = VideoCatalog(INDEXES_ROOT / "catalog" / "frame_mapping.parquet")
 submission_queue = SubmissionQueue()
 
@@ -118,7 +149,7 @@ def get_qna_service() -> KISVideoQA:
                 frame_limit=qna_cfg["frame_limit"],
             ),
         )
-        vlm = QwenVLAnswerer(model=llm_cfg["model"], base_url=llm_cfg["base_url"])
+        vlm = QwenVLAnswerer(model=llm_cfg["vlm_model"], base_url=llm_cfg["base_url"])
         splitter = QwenQuestionSplitter(model=llm_cfg["model"], base_url=llm_cfg["base_url"])
         _qna_service = KISVideoQA(
             candidate_search, vlm, data_root=DATA_ROOT, question_splitter=splitter
@@ -167,6 +198,7 @@ def get_trake_service() -> TRAKEWebPipeline:
             video_catalog=video_catalog,
             data_root=DATA_ROOT,
             llm_model=llm_cfg["model"],
+            vlm_model=llm_cfg["vlm_model"],
             llm_base_url=llm_cfg["base_url"],
             video_retrieval_config=VideoRetrievalConfig(video_limit=trake_cfg["video_limit"]),
         )
@@ -276,6 +308,16 @@ def video_info(video_id: str):
     return jsonify(
         {"video_id": info.video_id, "fps": info.fps, "video_available": info.video_available}
     )
+
+
+@app.get("/api/video/<video_id>/frames")
+def video_frames(video_id: str):
+    """Every available keyframe in this video, for the "all frames of this
+    video" browser in the Preview & Details panel."""
+    frames = video_frames_index.get(video_id)
+    if frames is None:
+        abort(404, description=f"Unknown video_id: {video_id!r}")
+    return jsonify({"video_id": video_id, "count": len(frames), "frames": frames})
 
 
 # --- Q&A (Milestone 4) -------------------------------------------------------

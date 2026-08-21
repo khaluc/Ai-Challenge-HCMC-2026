@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numbers
+import sys
 from pathlib import Path
 
 from .candidates import QACandidateSearch
@@ -128,10 +129,37 @@ class KISVideoQA:
         scored: list[tuple[QACandidate, VLMAnswer, float, float, float]] = []
         for candidate, frame_score in zip(candidates, frame_score_norm):
             image_bytes = load_keyframe_bytes(candidate.keyframe_path, data_root=self.data_root)
-            vlm_answer = self.vlm.answer(image_bytes, vlm_question, question_type=question_type)
+            try:
+                vlm_answer = self.vlm.answer(image_bytes, vlm_question, question_type=question_type)
+            except (RuntimeError, ValueError) as exc:
+                # One candidate's VLM call being flaky (content filter, malformed
+                # JSON, empty response) shouldn't sink the other candidates —
+                # skip it and keep going.
+                print(
+                    f"qna.pipeline: VLM call failed for {candidate.video_id}/{candidate.frame_id}: {exc}",
+                    file=sys.stderr,
+                )
+                continue
             video_score = video_score_norm[candidate.video_id]
             joint_confidence = video_score * frame_score * vlm_answer.confidence
             scored.append((candidate, vlm_answer, video_score, frame_score, joint_confidence))
+
+        if not scored:
+            return [
+                QAResult(
+                    query_id=query_id,
+                    question=question,
+                    route="visual",
+                    rank=1,
+                    video_id=None,
+                    frame_id=None,
+                    answer=None,
+                    confidence=0.0,
+                    note="VLM call failed for every candidate keyframe (see server log).",
+                    scene_description=scene_description,
+                    question_type=question_type,
+                )
+            ]
 
         scored.sort(key=lambda item: -item[4])
         return [

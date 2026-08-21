@@ -35,6 +35,7 @@ class TRAKEWebPipeline:
         video_catalog: VideoCatalog,
         data_root: str | Path,
         llm_model: str = "qwen3.8-max",
+        vlm_model: str | None = None,
         llm_base_url: str | None = None,
         video_retrieval_config: VideoRetrievalConfig | None = None,
     ) -> None:
@@ -45,7 +46,10 @@ class TRAKEWebPipeline:
         )
         self.coarse_aligner = CoarseTemporalAligner(hybrid_store, encoder)
         self.video_catalog = video_catalog
-        self.scorer = QwenFrameEventScorer(model=llm_model, base_url=llm_base_url)
+        # `QwenFrameEventScorer` looks at images (Verify with VLM), so it needs
+        # a vision-capable model — falls back to `llm_model` only if the
+        # caller doesn't have a separate vision model configured.
+        self.scorer = QwenFrameEventScorer(model=vlm_model or llm_model, base_url=llm_base_url)
 
     def search(self, query: str, *, query_id: str = "trake") -> dict[str, Any]:
         retrieval = self.video_retrieval.find_candidate_videos(query, query_id=query_id)

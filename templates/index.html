@@ -70,6 +70,14 @@
           <div class="results-list" id="results-list">
             <div id="candidate-grid"></div>
 
+            <div id="video-frames-panel" class="video-frames-panel hidden">
+              <div class="video-frames-header">
+                <button type="button" class="ghost-btn" id="video-frames-back-btn">&#8592; Quay lại kết quả tìm kiếm</button>
+                <span id="video-frames-title"></span>
+              </div>
+              <div id="video-frames-grid"></div>
+            </div>
+
             <div id="qna-panel" class="qna-panel hidden">
               <h3>VLM Answers</h3>
               <p class="hint" id="qna-scene-description"></p>
@@ -127,6 +135,8 @@
             <span id="info-video-id">—</span>
             <span id="info-keyframe-badge"></span>
           </div>
+
+          <button type="button" class="ghost-btn" id="show-all-frames-btn" disabled>&#127909; Xem tất cả frame của video này</button>
 
           <div class="preview-stat-grid">
             <div class="stat-tile">

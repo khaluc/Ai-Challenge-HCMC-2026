@@ -394,6 +394,10 @@ class QwenQueryUnderstanding:
             model=self._model,
             max_tokens=self._max_tokens,
             response_format={"type": "json_object"},
+            # Reasoning models can spend the whole max_tokens budget on
+            # hidden chain-of-thought and return empty content otherwise —
+            # not needed for this short structured-output task.
+            extra_body={"enable_thinking": False},
             messages=[
                 {"role": "system", "content": LLM_SYSTEM_PROMPT},
                 {"role": "user", "content": text},
